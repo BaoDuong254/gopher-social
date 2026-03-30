@@ -1,0 +1,33 @@
+{
+	"name": "gopher-social",
+	"version": "1.0.0",
+	"description": "",
+	"type": "module",
+	"license": "MIT",
+	"private": false,
+	"engines": {
+		"node": ">= 14.0.0",
+		"npm": ">= 6.0.0"
+	},
+	"homepage": "",
+	"repository": {
+		"type": "git",
+		"url": ""
+	},
+	"bugs": "",
+	"keywords": [],
+	"author": {
+		"name": "BaoDuong254",
+		"email": "duonggiabao254@gmail.com",
+		"url": "https://github.com/BaoDuong254"
+	},
+	"contributors": [],
+	"scripts": {
+		"dev": "",
+		"test": ""
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^20.5.0",
+		"@commitlint/config-conventional": "^20.5.0"
+	}
+}

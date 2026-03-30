@@ -1,0 +1,39 @@
+pre-commit:
+  parallel: true
+  commands:
+    tidy-check:
+      glob: "{**/*.go,go.mod,go.sum}"
+      run: |
+        go mod tidy
+        git diff --exit-code -- go.mod go.sum
+
+    format:
+      glob: "**/*.go"
+      run: gofmt -w .
+      stage_fixed: true
+
+    lint:
+      glob: "**/*.go"
+      run: golangci-lint run ./...
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx commitlint --edit {1}
+
+pre-push:
+  parallel: true
+  commands:
+    vet:
+      run: go vet ./...
+    build:
+      run: go build ./...
+
+post-commit:
+  commands:
+    success-message:
+      run: |
+        git update-index --again
+        echo "Commit successfully made!"
+        echo "Don't forget to push your changes!"
