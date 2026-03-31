@@ -9,6 +9,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const version = "0.0.1"
+
 func main() {
 	// Load environment variables from .env file.
 	err := godotenv.Load()
@@ -23,6 +25,7 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
+		env: env.GetString("ENV", "development"),
 	}
 
 	// Initialize a connection pool to the database, passing in all the relevant configuration settings.
@@ -44,7 +47,7 @@ func main() {
 		store:  store,
 	}
 	mux := app.mount()
-	log.Printf("Starting API server on %s", cfg.addr)
+	log.Printf("Starting API server on http://localhost%s", cfg.addr)
 	err = app.run(mux)
 	if err != nil {
 		log.Fatal(err)
