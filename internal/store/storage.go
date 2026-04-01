@@ -10,6 +10,7 @@ import (
 var (
 	ErrNotFound          = errors.New("record not found")
 	QueryTimeOutDuration = 5 * time.Second
+	ErrConflict          = errors.New("edit conflict")
 )
 
 type Storage struct {
@@ -27,12 +28,17 @@ type Storage struct {
 		Create(context.Context, *Comment) error
 		GetByPostID(context.Context, int64) ([]Comment, error)
 	}
+	Followers interface {
+		Follow(context.Context, int64, int64) error
+		Unfollow(context.Context, int64, int64) error
+	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
-		Posts:    &PostStore{db: db},
-		Users:    &UserStore{db: db},
-		Comments: &CommentStore{db: db},
+		Posts:     &PostStore{db: db},
+		Users:     &UserStore{db: db},
+		Comments:  &CommentStore{db: db},
+		Followers: &FollowStore{db: db},
 	}
 }

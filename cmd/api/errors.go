@@ -28,3 +28,11 @@ func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request,
 		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 }
+
+func (app *application) conflictResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("conflict error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
+	errs := writeJSONError(w, http.StatusConflict, err.Error())
+	if errs != nil {
+		http.Error(w, err.Error(), http.StatusConflict)
+	}
+}
