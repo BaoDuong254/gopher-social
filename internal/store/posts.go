@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/lib/pq"
@@ -17,9 +18,15 @@ type Post struct {
 	Tags      []string   `json:"tags"`
 	Comments  []Comment  `json:"comments"`
 	Version   int        `json:"version"`
+	User      User       `json:"user,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentCount int `json:"comments_count"`
 }
 
 type PostStore struct {
@@ -104,4 +111,61 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 		}
 	}
 	return nil
+}
+
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetadata, error) {
+	query := `
+		SELECT p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags, u.username,
+		COUNT(c.id) AS comments_count
+		FROM posts p
+		LEFT JOIN comments c ON c.post_id = p.id AND c.deleted_at IS NULL
+		LEFT JOIN users u ON p.user_id = u.id
+		WHERE p.deleted_at IS NULL
+		AND (
+			p.user_id = $1
+			OR EXISTS (
+				SELECT 1
+				FROM followers f
+				WHERE f.user_id = p.user_id
+				AND f.follower_id = $1
+				AND f.deleted_at IS NULL
+			)
+		)
+		GROUP BY p.id, u.username
+		ORDER BY p.created_at DESC
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeOutDuration)
+	defer cancel()
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("error closing rows: %v", err)
+		}
+	}()
+	feed := make([]PostWithMetadata, 0)
+	for rows.Next() {
+		var p PostWithMetadata
+		err := rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.Title,
+			&p.Content,
+			&p.CreatedAt,
+			&p.Version,
+			pq.Array(&p.Tags),
+			&p.User.Username,
+			&p.CommentCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+		feed = append(feed, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return feed, nil
 }
