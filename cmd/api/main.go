@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/baoduong254/gopher-social/internal/db"
 	"github.com/baoduong254/gopher-social/internal/env"
 	"github.com/baoduong254/gopher-social/internal/store"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 const version = "0.0.1"
@@ -47,6 +49,15 @@ func main() {
 		env: env.GetString("ENV", "development"),
 	}
 
+	// Logger
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			log.Println("failed to sync logger:", err)
+		}
+	}()
+	logger.Infof("Starting application in %s environment", cfg.env)
+
 	// Initialize a connection pool to the database, passing in all the relevant configuration settings.
 	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
 	if err != nil {
@@ -57,16 +68,17 @@ func main() {
 			log.Println("failed to close db:", err)
 		}
 	}()
-	log.Printf("Database connection pool established")
+	logger.Info("Database connection pool established")
 	store := store.NewStorage(db)
 
 	// Initialize a new instance of our application struct, containing the config and store objects.
 	app := &application{
 		config: cfg,
 		store:  store,
+		logger: logger,
 	}
 	mux := app.mount()
-	log.Printf("Starting API server on http://localhost%s", cfg.addr)
+	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))
 	err = app.run(mux)
 	if err != nil {
 		log.Fatal(err)

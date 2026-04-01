@@ -9,6 +9,7 @@ require (
 	github.com/lib/pq v1.12.0
 	github.com/swaggo/http-swagger/v2 v2.0.2
 	github.com/swaggo/swag v1.16.6
+	go.uber.org/zap v1.27.1
 )
 
 require (
@@ -73,6 +74,7 @@ require (
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/urfave/cli/v3 v3.7.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/mod v0.34.0 // indirect
