@@ -15,9 +15,10 @@ type Post struct {
 	Title     string     `json:"title"`
 	UserID    int64      `json:"user_id"`
 	Tags      []string   `json:"tags"`
+	Comments  []Comment  `json:"comments"`
 	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
 type PostStore struct {

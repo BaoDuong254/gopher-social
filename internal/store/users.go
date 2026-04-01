@@ -11,8 +11,8 @@ type User struct {
 	Password  string `json:"-"`
 	Email     string `json:"email"`
 	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	DeletedAt string `json:"deleted_at"`
+	UpdatedAt string `json:"updated_at,omitempty"`
+	DeletedAt string `json:"deleted_at,omitempty"`
 }
 
 type UserStore struct {
