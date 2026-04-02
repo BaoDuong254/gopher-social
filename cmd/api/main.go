@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/baoduong254/gopher-social/internal/auth"
 	"github.com/baoduong254/gopher-social/internal/db"
 	"github.com/baoduong254/gopher-social/internal/env"
 	"github.com/baoduong254/gopher-social/internal/mailer"
@@ -78,6 +79,11 @@ func main() {
 				user: env.GetString("AUTH_BASIC_USER", "admin"),
 				pass: env.GetString("AUTH_BASIC_PASS", "password"),
 			},
+			token: tokenAuthConfig{
+				secret: env.GetString("AUTH_TOKEN_SECRET", "supersecretkey"),
+				exp:    time.Hour * 24 * 3, // 3 days
+				iss:    "gopher-social.com",
+			},
 		},
 	}
 
@@ -110,12 +116,16 @@ func main() {
 		log.Panic(err)
 	}
 
+	// JWT Authenticator
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, cfg.auth.token.iss, cfg.auth.token.iss)
+
 	// Initialize a new instance of our application struct, containing the config and store objects.
 	app := &application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: mailTrapClientAdapter{client: mailtrap},
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        mailTrapClientAdapter{client: mailtrap},
+		authenticator: jwtAuthenticator,
 	}
 	mux := app.mount()
 	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/baoduong254/gopher-social/docs"
+	"github.com/baoduong254/gopher-social/internal/auth"
 	"github.com/baoduong254/gopher-social/internal/mailer"
 	"github.com/baoduong254/gopher-social/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -16,10 +17,11 @@ import (
 )
 
 type application struct {
-	config config
-	store  store.Storage
-	logger *zap.SugaredLogger
-	mailer mailer.Client
+	config        config
+	store         store.Storage
+	logger        *zap.SugaredLogger
+	mailer        mailer.Client
+	authenticator auth.Authenticator
 }
 
 type config struct {
@@ -34,6 +36,13 @@ type config struct {
 
 type authConfig struct {
 	basic basicAuthConfig
+	token tokenAuthConfig
+}
+
+type tokenAuthConfig struct {
+	secret string
+	exp    time.Duration
+	iss    string
 }
 
 type basicAuthConfig struct {
@@ -120,6 +129,7 @@ func (app *application) mount() http.Handler {
 		// Public routes
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
+			r.Post("/token", app.createTokenHandler)
 		})
 	})
 	return r
