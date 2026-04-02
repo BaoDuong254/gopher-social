@@ -36,3 +36,28 @@ func (app *application) conflictResponse(w http.ResponseWriter, r *http.Request,
 		http.Error(w, err.Error(), http.StatusConflict)
 	}
 }
+
+func (app *application) unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("unauthorized error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
+	errs := writeJSONError(w, http.StatusUnauthorized, err.Error())
+	if errs != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+}
+
+func (app *application) unauthorizedBasicErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("unauthorized error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
+	w.Header().Set("WWW-Authenticate", `Basic realm="Restricted", charset="UTF-8"`)
+	errs := writeJSONError(w, http.StatusUnauthorized, "invalid credentials")
+	if errs != nil {
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+	}
+}
+
+func (app *application) forbiddenResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("forbidden error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
+	errs := writeJSONError(w, http.StatusForbidden, err.Error())
+	if errs != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+	}
+}
