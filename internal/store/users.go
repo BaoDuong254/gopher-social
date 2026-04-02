@@ -211,3 +211,33 @@ func (s *UserStore) deleteUserInvitations(ctx context.Context, tx *sql.Tx, id in
 	}
 	return nil
 }
+
+func (s *UserStore) Delete(ctx context.Context, id int64) error {
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		if err := s.delete(ctx, tx, id); err != nil {
+			return err
+		}
+		// user_invitations.user_id has ON DELETE CASCADE.
+		return nil
+	})
+}
+
+func (s *UserStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
+	query := `
+		DELETE FROM users WHERE id = $1
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeOutDuration)
+	defer cancel()
+	result, err := tx.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
+}

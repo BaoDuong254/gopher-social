@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/baoduong254/gopher-social/internal/mailer"
 	"github.com/baoduong254/gopher-social/internal/store"
 	"github.com/google/uuid"
 )
@@ -59,6 +61,24 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	userWithToken := &UserWithToken{
 		User:  user,
 		Token: plainToken,
+	}
+	activationURL := fmt.Sprintf("%s/confirm/%s", app.config.frontendURL, plainToken)
+	isProdEnv := app.config.env == "production"
+	vars := struct {
+		Username      string
+		ActivationURL string
+	}{
+		Username:      user.Username,
+		ActivationURL: activationURL,
+	}
+
+	err = app.mailer.Send(mailer.UserWelcomeEmailTemplate, user.Username, user.Email, vars, !isProdEnv)
+	if err != nil {
+		if err := app.store.Users.Delete(r.Context(), user.ID); err != nil {
+			app.logger.Errorf("failed to delete user after email sending failure: %v", err)
+		}
+		app.internalServerError(w, r, err)
+		return
 	}
 	if err := app.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
 		app.internalServerError(w, r, err)

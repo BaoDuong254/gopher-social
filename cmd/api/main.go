@@ -7,12 +7,26 @@ import (
 
 	"github.com/baoduong254/gopher-social/internal/db"
 	"github.com/baoduong254/gopher-social/internal/env"
+	"github.com/baoduong254/gopher-social/internal/mailer"
 	"github.com/baoduong254/gopher-social/internal/store"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 const version = "0.0.1"
+
+type mailTrapSender interface {
+	Send(string, string, string, any, bool) (int, error)
+}
+
+type mailTrapClientAdapter struct {
+	client mailTrapSender
+}
+
+func (a mailTrapClientAdapter) Send(to string, subject string, templateFile string, data any, isSandbox bool) error {
+	_, err := a.client.Send(to, subject, templateFile, data, isSandbox)
+	return err
+}
 
 //	@title			Gopher Social API
 //	@version		1.0
@@ -39,8 +53,9 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	cfg := config{
-		addr:   env.GetString("ADDR", ":8080"),
-		apiURL: env.GetString("API_URL", "localhost:8080"),
+		addr:        env.GetString("ADDR", ":8080"),
+		apiURL:      env.GetString("API_URL", "localhost:8080"),
+		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:4000"),
 		db: dbConfig{
 			addr:         env.GetString("DB_ADDR", "postgres://postgres:password@localhost:5432/gopher_social?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
@@ -49,7 +64,14 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
-			exp: time.Hour * 24 * 3, // 3 days
+			exp:       time.Hour * 24 * 3, // 3 days
+			fromEmail: env.GetString("SENDGRID_FROM_EMAIL", ""),
+			sendGrid: sendGridConfig{
+				apiKey: env.GetString("SENDGRID_API_KEY", ""),
+			},
+			mailTrap: mailTrapConfig{
+				apiKey: env.GetString("MAILTRAP_API_KEY", ""),
+			},
 		},
 	}
 
@@ -75,11 +97,19 @@ func main() {
 	logger.Info("Database connection pool established")
 	store := store.NewStorage(db)
 
+	// Mailer
+	// mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
+	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.fromEmail)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	// Initialize a new instance of our application struct, containing the config and store objects.
 	app := &application{
 		config: cfg,
 		store:  store,
 		logger: logger,
+		mailer: mailTrapClientAdapter{client: mailtrap},
 	}
 	mux := app.mount()
 	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))
