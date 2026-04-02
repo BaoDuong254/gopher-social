@@ -25,7 +25,7 @@ func main() {
 		}
 	}()
 	store := store.NewStorage(conn)
-	if err := db.Seed(store); err != nil {
+	if err := db.Seed(store, conn); err != nil {
 		log.Fatal("Error seeding database:", err)
 	}
 }
