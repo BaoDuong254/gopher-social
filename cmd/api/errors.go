@@ -37,13 +37,13 @@ func (app *application) conflictResponse(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-// func (app *application) unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
-// 	log.Printf("unauthorized error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
-// 	errs := writeJSONError(w, http.StatusUnauthorized, err.Error())
-// 	if errs != nil {
-// 		http.Error(w, err.Error(), http.StatusUnauthorized)
-// 	}
-// }
+func (app *application) unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("unauthorized error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
+	errs := writeJSONError(w, http.StatusUnauthorized, err.Error())
+	if errs != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+}
 
 func (app *application) unauthorizedBasicErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("unauthorized error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
