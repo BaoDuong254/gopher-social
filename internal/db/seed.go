@@ -100,6 +100,9 @@ func generateUsers(n int) ([]*store.User, error) {
 		user := &store.User{
 			Username: username,
 			Email:    username + "@example.com",
+			Role: store.Role{
+				Name: "user",
+			},
 		}
 
 		if err := user.Password.Set("password"); err != nil {

@@ -53,3 +53,11 @@ func (app *application) unauthorizedBasicErrorResponse(w http.ResponseWriter, r 
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 	}
 }
+
+func (app *application) forbiddenResponse(w http.ResponseWriter, r *http.Request, err error) {
+	log.Printf("forbidden error: %s path: %s error: %s", r.Method, r.URL.Path, err.Error())
+	errs := writeJSONError(w, http.StatusForbidden, err.Error())
+	if errs != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+	}
+}
