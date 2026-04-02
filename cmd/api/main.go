@@ -55,7 +55,7 @@ func main() {
 	cfg := config{
 		addr:        env.GetString("ADDR", ":8080"),
 		apiURL:      env.GetString("API_URL", "localhost:8080"),
-		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:4000"),
+		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:5173"),
 		db: dbConfig{
 			addr:         env.GetString("DB_ADDR", "postgres://postgres:password@localhost:5432/gopher_social?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
