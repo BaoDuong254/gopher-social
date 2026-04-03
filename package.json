@@ -9,7 +9,7 @@
 		"node": ">= 14.0.0",
 		"npm": ">= 6.0.0"
 	},
-	"homepage": "",
+	"homepage": "https://github.com/BaoDuong254/gopher-social#readme",
 	"repository": {
 		"type": "git",
 		"url": ""
