@@ -1,15 +1,20 @@
 package main
 
 import (
+	"expvar"
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/baoduong254/gopher-social/internal/auth"
 	"github.com/baoduong254/gopher-social/internal/db"
 	"github.com/baoduong254/gopher-social/internal/env"
 	"github.com/baoduong254/gopher-social/internal/mailer"
+	"github.com/baoduong254/gopher-social/internal/ratelimiter"
 	"github.com/baoduong254/gopher-social/internal/store"
+	"github.com/baoduong254/gopher-social/internal/store/cache"
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
@@ -85,6 +90,17 @@ func main() {
 				iss:    "gopher-social.com",
 			},
 		},
+		redisCfg: redisConfig{
+			addr:    env.GetString("REDIS_ADDR", "localhost:6379"),
+			pw:      env.GetString("REDIS_PASSWORD", ""),
+			db:      env.GetInt("REDIS_DB", 0),
+			enabled: env.GetBool("REDIS_ENABLED", true),
+		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
 
 	// Logger
@@ -106,8 +122,21 @@ func main() {
 			log.Println("failed to close db:", err)
 		}
 	}()
+	// Cache
+	var rdb *redis.Client
+	if cfg.redisCfg.enabled {
+		rdb = cache.NewRedisClient(cfg.redisCfg.addr, cfg.redisCfg.pw, cfg.redisCfg.db)
+		logger.Info("Redis cache enabled")
+	}
 	logger.Info("Database connection pool established")
 	store := store.NewStorage(db)
+	cacheStorage := cache.NewRedisStorage(rdb)
+
+	// Rate Limiter
+	ratelimiter := ratelimiter.NewFixedWindowRateLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
 
 	// Mailer
 	// mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
@@ -126,7 +155,19 @@ func main() {
 		logger:        logger,
 		mailer:        mailTrapClientAdapter{client: mailtrap},
 		authenticator: jwtAuthenticator,
+		cacheStorage:  cacheStorage,
+		rateLimiter:   ratelimiter,
 	}
+
+	// Metrics collection
+	expvar.NewString("version").Set(version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
 	mux := app.mount()
 	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))
 	err = app.run(mux)

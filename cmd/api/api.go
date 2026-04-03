@@ -1,14 +1,22 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/baoduong254/gopher-social/docs"
 	"github.com/baoduong254/gopher-social/internal/auth"
 	"github.com/baoduong254/gopher-social/internal/mailer"
+	"github.com/baoduong254/gopher-social/internal/ratelimiter"
 	"github.com/baoduong254/gopher-social/internal/store"
+	"github.com/baoduong254/gopher-social/internal/store/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -22,6 +30,8 @@ type application struct {
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	cacheStorage  cache.Storage
+	rateLimiter   ratelimiter.Limiter
 }
 
 type config struct {
@@ -32,6 +42,15 @@ type config struct {
 	mail        mailConfig
 	frontendURL string
 	auth        authConfig
+	redisCfg    redisConfig
+	rateLimiter ratelimiter.Config
+}
+
+type redisConfig struct {
+	addr    string
+	pw      string
+	db      int
+	enabled bool
 }
 
 type authConfig struct {
@@ -93,6 +112,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(app.RateLimiterMiddleware)
 
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
@@ -101,7 +121,8 @@ func (app *application) mount() http.Handler {
 
 	// Register the API endpoint handlers.
 	r.Route("/v1", func(r chi.Router) {
-		r.With(app.BasicAuthMiddleware()).Get("/health", app.healthcheckHandler)
+		r.Get("/health", app.healthcheckHandler)
+		r.With(app.BasicAuthMiddleware()).Get("/debug/vars", expvar.Handler().ServeHTTP)
 		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 		r.Route("/posts", func(r chi.Router) {
@@ -150,5 +171,27 @@ func (app *application) run(mux http.Handler) error {
 		ReadTimeout:  time.Second * 10,
 		IdleTimeout:  time.Minute,
 	}
-	return srv.ListenAndServe()
+	shutdown := make(chan error)
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-quit
+		app.logger.Infof("Received shutdown signal: %v", sig)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			shutdown <- fmt.Errorf("could not gracefully shutdown the server: %w", err)
+		}
+		shutdown <- nil
+	}()
+	err := srv.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("could not listen on %s: %w", app.config.addr, err)
+	}
+	err = <-shutdown
+	if err != nil {
+		return err
+	}
+	app.logger.Info("Server stopped gracefully")
+	return nil
 }

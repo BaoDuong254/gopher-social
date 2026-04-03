@@ -24,3 +24,15 @@ func GetInt(key string, defaultValue int) int {
 	}
 	return valAsInt
 }
+
+func GetBool(key string, defaultValue bool) bool {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	valAsBool, err := strconv.ParseBool(val)
+	if err != nil {
+		return defaultValue
+	}
+	return valAsBool
+}
