@@ -1,7 +1,7 @@
 {
 	"name": "gopher-social",
 	"version": "1.0.0",
-	"description": "",
+	"description": "A social media platform for gophers.",
 	"type": "module",
 	"license": "MIT",
 	"private": false,
