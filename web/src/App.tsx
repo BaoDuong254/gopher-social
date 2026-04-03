@@ -36,7 +36,7 @@ function App() {
   const redirect = useNavigate();
 
   const { data, error, isLoading } = useSWR<{ data: FeedPost[] }>(
-    "/feed",
+    "/users/feed",
     at ? fetcher(at) : null,
   );
 
@@ -77,7 +77,7 @@ function App() {
   };
 
   const reFetchData = () => {
-    mutate("/feed");
+    mutate("/users/feed");
   };
 
   const handleClickPost = (id: number) => () => redirect(`/post/${id}`);
