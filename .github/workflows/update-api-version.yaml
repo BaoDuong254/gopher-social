@@ -52,6 +52,7 @@ jobs:
         if: steps.resolve_version.outputs.skip != 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
           commit-message: "chore: update api version to ${{ steps.resolve_version.outputs.version }}"
           title: "chore: update api version to ${{ steps.resolve_version.outputs.version }}"
           body: |
