@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/baoduong254/gopher-social/internal/auth"
@@ -53,13 +54,17 @@ func (a mailTrapClientAdapter) Send(to string, subject string, templateFile stri
 // @name						Authorization
 // @description				Type "Bearer" followed by a space and JWT token.
 func main() {
-	// Load environment variables from .env file.
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	// In cloud runtimes, environment variables are injected by the platform and .env may not exist.
+	if err := godotenv.Load(); err != nil {
+		log.Printf("No .env file loaded, using runtime environment variables: %v", err)
 	}
+
+	port := env.GetString("PORT", "8080")
+	defaultAddr := ":" + port
+
+	var err error
 	cfg := config{
-		addr:        env.GetString("ADDR", ":8080"),
+		addr:        env.GetString("ADDR", defaultAddr),
 		apiURL:      env.GetString("API_URL", "localhost:8080"),
 		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:5173"),
 		db: dbConfig{
@@ -169,7 +174,11 @@ func main() {
 	}))
 
 	mux := app.mount()
-	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))
+	serverURL := "http://" + cfg.addr
+	if strings.HasPrefix(cfg.addr, ":") {
+		serverURL = "http://localhost" + cfg.addr
+	}
+	logger.Info(fmt.Sprintf("Starting API server on %s", serverURL))
 	err = app.run(mux)
 	if err != nil {
 		log.Fatal(err)
