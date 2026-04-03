@@ -1,8 +1,10 @@
 package main
 
 import (
+	"expvar"
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/baoduong254/gopher-social/internal/auth"
@@ -156,6 +158,16 @@ func main() {
 		cacheStorage:  cacheStorage,
 		rateLimiter:   ratelimiter,
 	}
+
+	// Metrics collection
+	expvar.NewString("version").Set(version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
 	mux := app.mount()
 	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))
 	err = app.run(mux)
