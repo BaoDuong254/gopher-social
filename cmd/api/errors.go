@@ -61,3 +61,11 @@ func (app *application) forbiddenResponse(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusForbidden)
 	}
 }
+
+func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request, retryAfter string) {
+	w.Header().Set("Retry-After", retryAfter) // Suggest client to retry after 60 seconds
+	errs := writeJSONError(w, http.StatusTooManyRequests, "rate limit exceeded, please try again later")
+	if errs != nil {
+		http.Error(w, "rate limit exceeded, please try again later", http.StatusTooManyRequests)
+	}
+}

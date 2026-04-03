@@ -9,6 +9,7 @@ import (
 	"github.com/baoduong254/gopher-social/internal/db"
 	"github.com/baoduong254/gopher-social/internal/env"
 	"github.com/baoduong254/gopher-social/internal/mailer"
+	"github.com/baoduong254/gopher-social/internal/ratelimiter"
 	"github.com/baoduong254/gopher-social/internal/store"
 	"github.com/baoduong254/gopher-social/internal/store/cache"
 	"github.com/go-redis/redis/v8"
@@ -93,6 +94,11 @@ func main() {
 			db:      env.GetInt("REDIS_DB", 0),
 			enabled: env.GetBool("REDIS_ENABLED", true),
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
 
 	// Logger
@@ -124,6 +130,12 @@ func main() {
 	store := store.NewStorage(db)
 	cacheStorage := cache.NewRedisStorage(rdb)
 
+	// Rate Limiter
+	ratelimiter := ratelimiter.NewFixedWindowRateLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	// Mailer
 	// mailer := mailer.NewSendGrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
 	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.fromEmail)
@@ -142,6 +154,7 @@ func main() {
 		mailer:        mailTrapClientAdapter{client: mailtrap},
 		authenticator: jwtAuthenticator,
 		cacheStorage:  cacheStorage,
+		rateLimiter:   ratelimiter,
 	}
 	mux := app.mount()
 	logger.Info(fmt.Sprintf("Starting API server on http://localhost%s", cfg.addr))
