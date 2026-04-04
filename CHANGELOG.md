@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/BaoDuong254/gopher-social/compare/v1.1.0...v1.2.0) (2026-04-04)
+
+
+### Features
+
+* enhance user feed handler with authentication check and add vercel configuration ([2dd8401](https://github.com/BaoDuong254/gopher-social/commit/2dd8401fed03cf8bd9b5cf4448ab52225c7be09b))
+
 ## [1.1.0](https://github.com/BaoDuong254/gopher-social/compare/v1.0.0...v1.1.0) (2026-04-03)
 
 
