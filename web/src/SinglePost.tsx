@@ -8,11 +8,12 @@ export const SinglePost = () => {
   const { postID } = useParams();
   const [cookies] = useCookies(["at"]);
   const at = cookies.at;
+  const postKey = postID && at ? "/posts/" + postID : null;
 
   const redirect = useNavigate();
 
   const { data, error, isLoading } = useSWR<{ data: FeedPost }>(
-    "/posts/" + postID,
+    postKey,
     at ? fetcher(at) : null,
   );
 
