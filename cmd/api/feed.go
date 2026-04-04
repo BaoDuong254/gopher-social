@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/baoduong254/gopher-social/internal/store"
@@ -21,7 +22,13 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	feed, err := app.store.Posts.GetUserFeed(r.Context(), int64(1), fq)
+	user := app.getUserFromContext(r)
+	if user == nil {
+		app.unauthorizedResponse(w, r, errors.New("missing authenticated user in request context"))
+		return
+	}
+
+	feed, err := app.store.Posts.GetUserFeed(r.Context(), user.ID, fq)
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
