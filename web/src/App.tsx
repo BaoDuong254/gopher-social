@@ -32,11 +32,12 @@ export const fetcher = (at: string) => async (url: string) => {
 function App() {
   const [cookies, setCookie] = useCookies(["at"]);
   const at = cookies.at;
+  const feedKey = at ? "/users/feed" : null;
 
   const redirect = useNavigate();
 
   const { data, error, isLoading } = useSWR<{ data: FeedPost[] }>(
-    "/users/feed",
+    feedKey,
     at ? fetcher(at) : null,
   );
 
