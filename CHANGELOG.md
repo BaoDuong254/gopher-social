@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/BaoDuong254/gopher-social/compare/v1.2.0...v1.3.0) (2026-04-04)
+
+
+### Features
+
+* add checkout step for syncing repository after release ([22f3867](https://github.com/BaoDuong254/gopher-social/commit/22f3867e5b702aaa7ab3a790e4a031b5dbe3cc43))
+
 ## [1.2.0](https://github.com/BaoDuong254/gopher-social/compare/v1.1.0...v1.2.0) (2026-04-04)
 
 
