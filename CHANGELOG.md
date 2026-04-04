@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/BaoDuong254/gopher-social/compare/v1.4.0...v1.5.0) (2026-04-04)
+
+
+### Features
+
+* add check for open API version pull request before syncing main into develop ([a1c91db](https://github.com/BaoDuong254/gopher-social/commit/a1c91db5b0bb377295c4fb4f3c5913622eaa8704))
+* add check for open API version pull request before syncing main into develop ([97cb21f](https://github.com/BaoDuong254/gopher-social/commit/97cb21fb1b70b47f3ddd67d88a92c00e2a003372))
+
 ## [1.4.0](https://github.com/BaoDuong254/gopher-social/compare/v1.3.0...v1.4.0) (2026-04-04)
 
 
