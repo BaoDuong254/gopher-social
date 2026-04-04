@@ -31,14 +31,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
 
-      - name: Sync main into dev after release
+      - name: Sync main into develop after release
         if: steps.release.outputs.release_created == 'true'
         uses: repo-sync/pull-request@v2
         with:
           github_token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
           source_branch: main
-          destination_branch: dev
-          pr_title: "chore: sync main into dev after release"
+          destination_branch: develop
+          pr_title: "chore: sync main into develop after release"
           pr_body: |
-            Auto-generated PR to sync released changes from `main` into `dev`.
+            Auto-generated PR to sync released changes from `main` into `develop`.
           pr_label: chore
