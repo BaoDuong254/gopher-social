@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/BaoDuong254/gopher-social/compare/v1.3.0...v1.4.0) (2026-04-04)
+
+
+### Features
+
+* use dynamic feed and post keys in SWR hooks ([f70296e](https://github.com/BaoDuong254/gopher-social/commit/f70296e6207ef59a3e2ef26694e36e086fac486a))
+* use dynamic feed and post keys in SWR hooks ([8635d3f](https://github.com/BaoDuong254/gopher-social/commit/8635d3f194fbe3cf73ad211ae2f9a4961a6f997c))
+
 ## [1.3.0](https://github.com/BaoDuong254/gopher-social/compare/v1.2.0...v1.3.0) (2026-04-04)
 
 
